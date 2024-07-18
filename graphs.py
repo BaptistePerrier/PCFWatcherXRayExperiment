@@ -42,7 +42,7 @@ class Graph:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-    def set_visibility(self, name, value=True):
+    def set_visibility(self, name, value):
         if name in self.lines.keys():
             self.lines[name].set_visible(value)
             self.txts[name].set_visible(value)

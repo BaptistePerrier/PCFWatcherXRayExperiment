@@ -2,6 +2,7 @@ from datetime import datetime
 import pytz
 import argparse
 import matplotlib.pyplot as plt
+import re
 
 import graphs
 
@@ -15,7 +16,7 @@ class Logger:
         messageToWrite = "[{}][{}] {}".format(datetime.now(self.tz).strftime("%d%m%Y %H:%M:%S"), level, message)
         self.f.write(messageToWrite + "\n")
         if level >= self.logLevelConsole:
-            print(messageToWrite)
+            print(message)
 
 class CLI:
     def __init__(self, logger) -> None:
@@ -41,12 +42,90 @@ class CLI:
         self.S_iTGraph.refresh()
         self.T_FTGraph.refresh()
 
-    def show(self, name):
-        self.S_iTGraph.set_visibility(name, True)
-        self.T_FTGraph.set_visibility(name, True)
+    def show(self, args):
+        parser = argparse.ArgumentParser(prog="show", exit_on_error=False)
+        parser.add_argument("expression", action="store", type=str)
 
-    def hide(self, name):
-        self.S_iTGraph.set_visibility(name, False)
-        self.T_FTGraph.set_visibility(name, False)
+        parsedArgs = parser.parse_args(args)
+
+        parsedArgs = parser.parse_args(args)
+        if parsedArgs.expression == "*":
+            for lineName in self.S_iTGraph.lines.keys():
+                self.S_iTGraph.set_visibility(lineName, True)
+
+            for lineName in self.T_FTGraph.lines.keys():
+                self.T_FTGraph.set_visibility(lineName, True)
+
+        else:
+            pattern = re.compile(parsedArgs.expression)
+            for lineName in self.S_iTGraph.lines.keys():
+                if bool(pattern.match(lineName)):
+                    self.S_iTGraph.set_visibility(lineName, True)
+
+            for lineName in self.T_FTGraph.lines.keys():
+                if bool(pattern.match(lineName)):
+                    self.T_FTGraph.set_visibility(lineName, True)
+
+    def hide(self, args):
+        parser = argparse.ArgumentParser(prog="hide", exit_on_error=False)
+        parser.add_argument("expression", action="store", type=str)
+
+        parsedArgs = parser.parse_args(args)
+        if parsedArgs.expression == "*":
+            for lineName in self.S_iTGraph.lines.keys():
+                self.S_iTGraph.set_visibility(lineName, False)
+
+            for lineName in self.T_FTGraph.lines.keys():
+                self.T_FTGraph.set_visibility(lineName, False)
+
+        else:
+            pattern = re.compile(parsedArgs.expression)
+            for lineName in self.S_iTGraph.lines.keys():
+                if bool(pattern.match(lineName)):
+                    self.S_iTGraph.set_visibility(lineName, False)
+
+            for lineName in self.T_FTGraph.lines.keys():
+                if bool(pattern.match(lineName)):
+                    self.T_FTGraph.set_visibility(lineName, False)
+
+    def list(self, args):
+        parser = argparse.ArgumentParser(prog="list", exit_on_error=False)
+        parser.add_argument("option", default="all", type=str, action="store", choices=["all", "hidden", "visible"], nargs='?')
+
+        parsedArgs = parser.parse_args(args)
+
+        message = ""
+        if parsedArgs.option == "visible":
+            message += ("\n\nS_i T Diagram :")
+            for name, line in self.S_iTGraph.lines.items():
+                if line.get_visible():
+                    message += ("\n\t{}".format(name))
+
+            message += ("\n\nT_F T Diagram :")
+            for name, line in self.T_FTGraph.lines.items():
+                if line.get_visible():
+                    message += ("\n\t{}".format(name))
+
+        elif parsedArgs.option == "hidden":
+            message += ("\n\nS_i T Diagram :")
+            for name, line in self.S_iTGraph.lines.items():
+                if not line.get_visible():
+                    message += ("\n\t{}".format(name))
+
+            message += ("\n\nT_F T Diagram :")
+            for name, line in self.T_FTGraph.lines.items():
+                if not line.get_visible():
+                    message += ("\n\t{}".format(name))
+
+        elif parsedArgs.option == "all":
+            message += ("\n\nS_i T Diagram :")
+            for name, line in self.S_iTGraph.lines.items():
+                message += ("\n\t[{}] {}".format("V" if line.get_visible() else " ", name))
+
+            message += ("\n\nT_F T Diagram :")
+            for name, line in self.T_FTGraph.lines.items():
+                message += ("\n\t[{}] {}".format("V" if line.get_visible() else " ", name))
+
+        self.logger.log(message)
 
 

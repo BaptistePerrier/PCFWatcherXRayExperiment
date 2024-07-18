@@ -16,7 +16,7 @@ while True:
         break
     elif command in dir(CLI):
         try:
-            getattr(CLI, command)(*args)
+            getattr(CLI, command)(args)
         except Exception as e:
             logger.log(str(e), 7)
     else:
