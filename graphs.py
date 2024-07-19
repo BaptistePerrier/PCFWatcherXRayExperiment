@@ -21,8 +21,18 @@ class Graph:
         self.scatters = {}
         self.txts = {}
 
+    def delete(self, name):
+        if name in self.lines.keys():
+            self.lines[name].remove()
+            del self.lines[name]
+        if name in self.txts.keys():
+            self.txts[name].remove()
+            del self.txts[name]
+
     def plot(self, x, y, name, label="", color='b', lw=1, labelLine=True, align=True, xvals=None):
-        self.lines[name], = self.ax.plot(x, y, label=label, color=color, lw=lw)
+        self.delete(name)
+        self.lines[name] = self.ax.plot(x, y, label=label, color=color, lw=lw)[0]
+
         if labelLine:
             if xvals:
                 txts = labelLines([self.lines[name]], xvals=xvals, align=align)
@@ -66,7 +76,7 @@ class S_iTGraph(Graph):
         self.T_FTGraph = T_FTGraph
         self.T_FTGraphLinked = True
 
-    def S_w1(self):
+    def S_w1(self, args):
         S_in = [parametrization.S_w2S_i_P0(T, 1) for T in self.Tn]
         self.plot(self.Tn, S_in, name="S_w1", label="$S_w = 1$", color="blue")
 
@@ -74,50 +84,112 @@ class S_iTGraph(Graph):
             T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
             self.T_FTGraph.plot(self.Tn, T_Fn, name="S_w1", label="$S_w = 1$", color="blue")
 
-    def S_i1(self):
-        S_in = [1] * self.Tn.size
-        self.plot(self.Tn, S_in, name="S_i1", color="k", lw=0.5)
+    def S_w(self, args): ### PAS FINI
+        parser = argparse.ArgumentParser(prog="S_w", description="Draw a single S_w line", exit_on_error=False)
+        parser.add_argument("S_w", type=float, help="S_w line to draw")
+        parser.add_argument("-c", "--color", choices=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys(), dest="color", default="lightgrey", help="Color of the line (default: %(default)s)", metavar='matplotlibColor')
+        parser.add_argument("-w", "--lw", dest="lw", type=float, default=1, help="Line width (default: %(default)s)")
+        parser.add_argument("-u", "--unlabeled", dest="labeled", action="store_false", help="Unlabeled - when on, does not apply label to the line")
+        parser.add_argument("-x", "--xvals", dest="xvals", type=float, default=270, help="xvals, decide where to put the label, alignment with respect to the x-axis (default: %(default)s)")
+
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
+        
+        S_in = [parametrization.S_w2S_i_P0(T, parsedArgs.S_w) for T in self.Tn]
+        self.plot(self.Tn, S_in, labelLine=parsedArgs.labeled, name="S_w{:0.2f}".format(parsedArgs.S_w), label="$S_w$={:0.2f}".format(parsedArgs.S_w), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
         T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
-        self.T_FTGraph.plot(self.Tn, T_Fn, name="S_i1", color="k", lw=0.5)
+        self.T_FTGraph.plot(self.Tn, T_Fn, labelLine=parsedArgs.labeled, name="S_w{:0.2f}".format(parsedArgs.S_w), label="$S_w$={:0.2f}".format(parsedArgs.S_w), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
 
-    def iso_S_w(self, S_wn = np.linspace(0,0.9, 10)):
+    def S_i(self, args):
+        parser = argparse.ArgumentParser(prog="S_i", description="Draw a single S_i line", exit_on_error=False)
+        parser.add_argument("S_i", type=float, help="S_i line to draw")
+        parser.add_argument("-c", "--color", choices=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys(), dest="color", default="blue", help="Color of the line (default: %(default)s)", metavar='matplotlibColor')
+        parser.add_argument("-w", "--lw", dest="lw", type=float, default=1, help="Line width (default: %(default)s)")
+        parser.add_argument("-u", "--unlabeled", dest="labeled", action="store_false", help="Unlabeled - when on, does not apply label to the line")
+        parser.add_argument("-x", "--xvals", dest="xvals", type=float, default=270, help="xvals, decide where to put the label, alignment with respect to the x-axis (default: %(default)s)")
+
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
+        
+        S_in = [parsedArgs.S_i] * self.Tn.size
+        self.plot(self.Tn, S_in, labelLine=parsedArgs.labeled, name="S_i{:0.2f}".format(parsedArgs.S_i), label="$S_i$={:0.2f}".format(parsedArgs.S_i), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
+
+        T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
+        self.T_FTGraph.plot(self.Tn, T_Fn, labelLine=parsedArgs.labeled, name="S_i{:0.2f}".format(parsedArgs.S_i), label="$S_i$={:0.2f}".format(parsedArgs.S_i), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
+
+    def iso_S_w(self, args):
+        parser = argparse.ArgumentParser(prog="iso_S_w", description="Draw multiple S_w lines", exit_on_error=False)
+        parser.add_argument("-s", "--start", dest="start", type=float, default=0, help="Starting saturation ratio (default: %(default)s)")
+        parser.add_argument("-e", "--end", dest="end", type=float, default=0.9, help="Ending saturation ratio (default: %(default)s)")
+        parser.add_argument("-n", "--steps", dest="steps", type=int, default=10, help="Number of steps (default: %(default)s)")
+        parser.add_argument("-c", "--color", choices=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys(), dest="color", default="lightgray", help="Color of the line (default: %(default)s)", metavar='matplotlibColor')
+        parser.add_argument("-w", "--lw", dest="lw", type=float, default=1, help="Line width (default: %(default)s)")
+        parser.add_argument("-u", "--unlabeled", dest="labeled", action="store_false", help="Unlabeled - when on, does not apply label to the line")
+        parser.add_argument("-x", "--xvals", dest="xvals", type=float, default=270, help="xvals, decide where to put the label, alignment with respect to the x-axis (default: %(default)s)")
+
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
+
+        S_wn = np.linspace(parsedArgs.start, parsedArgs.end, parsedArgs.steps)
         for S_w in S_wn:
             S_in = parametrization.S_w2S_i_P0(self.Tn, S_w)
-            self.plot(self.Tn, S_in, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color="lightgrey", xvals=270)
+            self.plot(self.Tn, S_in, labelLine=parsedArgs.labeled, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color=parsedArgs.color, xvals=parsedArgs.xvals, lw=parsedArgs.lw)
 
             if not S_w == 0.0:
                 T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
-                self.T_FTGraph.plot(self.Tn, T_Fn, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color="lightgrey", xvals=270)
-            else:
-                self.T_FTGraph.plot([], [], name="S_w0")
+                self.T_FTGraph.plot(self.Tn, T_Fn, labelLine=parsedArgs.labeled, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color=parsedArgs.color, xvals=parsedArgs.xvals, lw=parsedArgs.lw)
 
     def T_F(self, args):
-        parser = argparse.ArgumentParser(prog="T_F")
+        parser = argparse.ArgumentParser(prog="T_F", description="Draw a single T_F line", exit_on_error=False)
         parser.add_argument("T_F", type=float, help="Frostpoint temperature to draw")
         parser.add_argument("-c", "--color", choices=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys(), dest="color", default="green", help="Color of the line (default: %(default)s)", metavar='matplotlibColor')
         parser.add_argument("-w", "--lw", dest="lw", type=float, default=0.5, help="Line width (default: %(default)s)")
         parser.add_argument("-u", "--unlabeled", dest="labeled", action="store_false", help="Unlabeled - when on, does not apply label to the line")
         parser.add_argument("-x", "--xvals", dest="xvals", type=float, default=260, help="xvals, decide where to put the label, alignment with respect to the x-axis (default: %(default)s)")
 
-        parsedArgs = parser.parse_args(args)
-        print(parsedArgs)
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
 
         S_in = self.T_F2S_in(self.Tn, parsedArgs.T_F)
-        self.plot(self.Tn, S_in, labelLine=parsedArgs.unlabeled, name="T_F{:0.2f}".format(parsedArgs.T_F), label="$T_F$={:0.2f}".format(parsedArgs.T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
+        self.plot(self.Tn, S_in, labelLine=parsedArgs.labeled, name="T_F{:0.2f}".format(parsedArgs.T_F), label="$T_F$={:0.2f}".format(parsedArgs.T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
         T_FnReconverted = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
-        self.T_FTGraph.plot(self.Tn, T_FnReconverted, labelLine=parsedArgs.unlabeled, name="T_F{:0.2f}".format(parsedArgs.T_F), label="$T_F$={:0.2f}".format(parsedArgs.T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
+        self.T_FTGraph.plot(self.Tn, T_FnReconverted, labelLine=parsedArgs.labeled, name="T_F{:0.2f}".format(parsedArgs.T_F), label="$T_F$={:0.2f}".format(parsedArgs.T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
 
-    def iso_T_F(self, T_Fn = np.linspace(238, 258, 10)):
+    def iso_T_F(self, args):
+        parser = argparse.ArgumentParser(prog="iso_T_F", description="Draw multiple T_F lines", exit_on_error=False)
+        parser.add_argument("-s", "--start", dest="start", type=float, default=238, help="Starting temperature (default: %(default)s)")
+        parser.add_argument("-e", "--end", dest="end", type=float, default=258, help="Ending temperature (default: %(default)s)")
+        parser.add_argument("-n", "--steps", dest="steps", type=int, default=11, help="Number of steps (default: %(default)s)")
+        parser.add_argument("-c", "--color", choices=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys(), dest="color", default="green", help="Color of the line (default: %(default)s)", metavar='matplotlibColor')
+        parser.add_argument("-w", "--lw", dest="lw", type=float, default=0.5, help="Line width (default: %(default)s)")
+        parser.add_argument("-u", "--unlabeled", dest="labeled", action="store_false", help="Unlabeled - when on, does not apply label to the line")
+        parser.add_argument("-x", "--xvals", dest="xvals", type=float, default=260, help="xvals, decide where to put the label, alignment with respect to the x-axis (default: %(default)s)")
+
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
+
+        T_Fn = np.linspace(parsedArgs.start, parsedArgs.end, parsedArgs.steps)
+
         for T_F in T_Fn:
             S_in = self.T_F2S_in(self.Tn, T_F)
-            self.plot(self.Tn, S_in, name="T_F{:0.2f}".format(T_F), label="$T_F$={:0.2f}".format(T_F), color="green", lw=0.5, xvals=260)
+            self.plot(self.Tn, S_in, labelLine=parsedArgs.labeled, name="T_F{:0.2f}".format(T_F), label="$T_F$={:0.2f}".format(T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
             T_FnReconverted = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
-            self.T_FTGraph.plot(self.Tn, T_FnReconverted, name="T_F{:0.2f}".format(T_F), label="$T_F$={:0.2f}".format(T_F), color="green", lw=0.5, xvals=240)
+            self.T_FTGraph.plot(self.Tn, T_FnReconverted, labelLine=parsedArgs.labeled, name="T_F{:0.2f}".format(T_F), label="$T_F$={:0.2f}".format(T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
 
     def ambiant_S_w(self, ambiantT=296, S_wn = np.linspace(0,5,6)):

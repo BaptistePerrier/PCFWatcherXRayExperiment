@@ -37,17 +37,48 @@ class CLI:
 
     def graph(self, args):
         graphFunction = getattr(self.S_iTGraph, args[0])
-        
-        if args[1:]:
-            graphFunction(args[1:])
-        else:
-            graphFunction()
+
+        graphFunction(args[1:])
 
         self.S_iTGraph.refresh()
         self.T_FTGraph.refresh()
 
+    def delete(self, args):
+        parser = argparse.ArgumentParser(prog="delete", exit_on_error=False, description="Delete lines from the graph. RegularExpressions can be used")
+        parser.add_argument("expression", action="store", type=str, help="RegularExpression to math the lines to delete")
+
+        parsedArgs = parser.parse_args(args)
+
+        parsedArgs = parser.parse_args(args)
+
+        if parsedArgs.expression == "*":
+            lineNames = list(self.S_iTGraph.lines.keys())
+
+            for lineName in lineNames:
+                self.S_iTGraph.delete(lineName)
+
+            lineNames = list(self.T_FTGraph.lines.keys())
+            
+            for lineName in lineNames:
+                self.T_FTGraph.delete(lineName)
+
+        else:
+            pattern = re.compile(parsedArgs.expression)
+
+            lineNames = list(self.S_iTGraph.lines.keys())
+
+            for lineName in lineNames:
+                if bool(pattern.match(lineName)):
+                    self.S_iTGraph.delete(lineName)
+
+            lineNames = list(self.T_FTGraph.lines.keys())
+
+            for lineName in lineNames:
+                if bool(pattern.match(lineName)):
+                    self.T_FTGraph.delete(lineName)
+
     def show(self, args):
-        parser = argparse.ArgumentParser(prog="show", exit_on_error=False)
+        parser = argparse.ArgumentParser(prog="show", exit_on_error=False, description="Show hidden lines on the graph. RegularExpressions can be used")
         parser.add_argument("expression", action="store", type=str)
 
         parsedArgs = parser.parse_args(args)
@@ -71,7 +102,7 @@ class CLI:
                     self.T_FTGraph.set_visibility(lineName, True)
 
     def hide(self, args):
-        parser = argparse.ArgumentParser(prog="hide", exit_on_error=False)
+        parser = argparse.ArgumentParser(prog="hide", exit_on_error=False, description="Hide lines on the graph. RegularExpressions can be used")
         parser.add_argument("expression", action="store", type=str)
 
         parsedArgs = parser.parse_args(args)
@@ -96,7 +127,10 @@ class CLI:
         parser = argparse.ArgumentParser(prog="list", exit_on_error=False)
         parser.add_argument("option", default="all", type=str, action="store", choices=["all", "hidden", "visible"], nargs='?')
 
-        parsedArgs = parser.parse_args(args)
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
 
         message = ""
         if parsedArgs.option == "visible":
@@ -131,5 +165,27 @@ class CLI:
                 message += ("\n\t[{}] {}".format("V" if line.get_visible() else " ", name))
 
         self.logger.log(message)
+
+    def c2k(self, args):
+        parser = argparse.ArgumentParser(prog="c2k", description="Converts Celcius to Kelvin", exit_on_error=False)
+        parser.add_argument("celcius", type=float, help="Celcius temperature to convert")
+
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
+
+        self.logger.log(str(parsedArgs.celcius + 273.15))
+
+    def k2c(self, args):
+        parser = argparse.ArgumentParser(prog="k2c", description="Converts Kelvin to Celcius", exit_on_error=False)
+        parser.add_argument("kelvin", type=float, help="Kelvin temperature to convert")
+
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
+
+        self.logger.log(str(parsedArgs.kelvin - 273.15))
 
 
