@@ -2,6 +2,7 @@ from datetime import datetime
 import pytz
 import argparse
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Cursor
 import re
 
 import graphs
@@ -28,14 +29,17 @@ class CLI:
 
         self.S_iTGraph.link_T_FTGraph(self.T_FTGraph)
 
+
+        #cursor = Cursor(self.S_iTGraph.fig, useblit=True, color='black', linewidth=1)
+
         plt.ion()
         plt.show()
 
-    def graph(self, name, *args):
-        graphFunction = getattr(self.S_iTGraph, name)
+    def graph(self, args):
+        graphFunction = getattr(self.S_iTGraph, args[0])
         
-        if args:
-            graphFunction(args)
+        if args[1:]:
+            graphFunction(args[1:])
         else:
             graphFunction()
 

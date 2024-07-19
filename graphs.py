@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import matplotlib.text
+import matplotlib.colors as mcolors
 from labellines import labelLines
 import numpy as np
 from numpy._core.function_base import linspace as linspace
+import argparse
 
 import parametrization
 
@@ -64,7 +66,7 @@ class S_iTGraph(Graph):
         self.T_FTGraph = T_FTGraph
         self.T_FTGraphLinked = True
 
-    def S_i1(self):
+    def S_w1(self):
         S_in = [parametrization.S_w2S_i_P0(T, 1) for T in self.Tn]
         self.plot(self.Tn, S_in, name="S_w1", label="$S_w = 1$", color="blue")
 
@@ -72,16 +74,68 @@ class S_iTGraph(Graph):
             T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
             self.T_FTGraph.plot(self.Tn, T_Fn, name="S_w1", label="$S_w = 1$", color="blue")
 
+    def S_i1(self):
+        S_in = [1] * self.Tn.size
+        self.plot(self.Tn, S_in, name="S_i1", color="k", lw=0.5)
+
+        T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
+        self.T_FTGraph.plot(self.Tn, T_Fn, name="S_i1", color="k", lw=0.5)
+
+
     def iso_S_w(self, S_wn = np.linspace(0,0.9, 10)):
         for S_w in S_wn:
-            S_in = [parametrization.S_w2S_i_P0(T, S_w) for T in self.Tn]
+            S_in = parametrization.S_w2S_i_P0(self.Tn, S_w)
             self.plot(self.Tn, S_in, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color="lightgrey", xvals=270)
 
             if not S_w == 0.0:
                 T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
                 self.T_FTGraph.plot(self.Tn, T_Fn, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color="lightgrey", xvals=270)
             else:
-                self.T_FTGraph.plot([], [], name="S_w0")     
+                self.T_FTGraph.plot([], [], name="S_w0")
+
+    def T_F(self, args):
+        parser = argparse.ArgumentParser(prog="T_F")
+        parser.add_argument("T_F", type=float, help="Frostpoint temperature to draw")
+        parser.add_argument("-c", "--color", choices=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys(), dest="color", default="green", help="Color of the line (default: %(default)s)", metavar='matplotlibColor')
+        parser.add_argument("-w", "--lw", dest="lw", type=float, default=0.5, help="Line width (default: %(default)s)")
+        parser.add_argument("-u", "--unlabeled", dest="labeled", action="store_false", help="Unlabeled - when on, does not apply label to the line")
+        parser.add_argument("-x", "--xvals", dest="xvals", type=float, default=260, help="xvals, decide where to put the label, alignment with respect to the x-axis (default: %(default)s)")
+
+        parsedArgs = parser.parse_args(args)
+        print(parsedArgs)
+
+        S_in = self.T_F2S_in(self.Tn, parsedArgs.T_F)
+        self.plot(self.Tn, S_in, labelLine=parsedArgs.unlabeled, name="T_F{:0.2f}".format(parsedArgs.T_F), label="$T_F$={:0.2f}".format(parsedArgs.T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
+
+        T_FnReconverted = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
+        self.T_FTGraph.plot(self.Tn, T_FnReconverted, labelLine=parsedArgs.unlabeled, name="T_F{:0.2f}".format(parsedArgs.T_F), label="$T_F$={:0.2f}".format(parsedArgs.T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
+
+
+    def iso_T_F(self, T_Fn = np.linspace(238, 258, 10)):
+        for T_F in T_Fn:
+            S_in = self.T_F2S_in(self.Tn, T_F)
+            self.plot(self.Tn, S_in, name="T_F{:0.2f}".format(T_F), label="$T_F$={:0.2f}".format(T_F), color="green", lw=0.5, xvals=260)
+
+            T_FnReconverted = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
+            self.T_FTGraph.plot(self.Tn, T_FnReconverted, name="T_F{:0.2f}".format(T_F), label="$T_F$={:0.2f}".format(T_F), color="green", lw=0.5, xvals=240)
+
+
+    def ambiant_S_w(self, ambiantT=296, S_wn = np.linspace(0,5,6)):
+        for S_w in S_wn:
+            S_in = np.array([parametrization.S_w2S_i_P0(self.Tn, parametrization.S_w_changeTemp(T, ambiantT, S_w)) for T in self.Tn])
+            self.plot(self.Tn, S_in, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color="orange")
+
+            if not S_w == 0.0:
+                T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
+                self.T_FTGraph.plot(self.Tn, T_Fn, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color="lightgrey", xvals=270)
+            else:
+                self.T_FTGraph.plot([], [], name="S_w0")
+
+    def T_F2S_in(self, Tn, T_F):
+        ln_p = parametrization.ln_p_MurphyKoop2005(T_F)
+        S_i = np.exp(ln_p - parametrization.ln_p_i_P0(Tn))
+
+        return S_i
         
 class T_FTGraph(Graph):
 
@@ -89,7 +143,6 @@ class T_FTGraph(Graph):
         super().__init__(title, x_label, y_label, Tn)
 
     def S_in2T_Fn(self, Tn, S_in):
-        TnLen = np.array(Tn).size
         ln_p = np.log(S_in) + parametrization.ln_p_i_P0(Tn)
 
-        return parametrization.T_F_MurphyKoop2002(ln_p)
+        return parametrization.T_F_MurphyKoop2005(ln_p)

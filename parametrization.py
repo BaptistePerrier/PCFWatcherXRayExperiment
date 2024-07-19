@@ -97,8 +97,11 @@ def p2Si(T, p):
 def T_F(Psi):
     return 272.55 / 22.452 * np.log(Psi / 611.15) * (1 - np.log(Psi / 611.15)/22.452)
 
-def T_F_MurphyKoop2002(ln_p):
+def T_F_MurphyKoop2005(ln_p):
     return (1.514625 * ln_p + 6190.134) / (29.12 - ln_p)
+
+def ln_p_MurphyKoop2005(T_F):
+    return (29.120 * T_F - 6190.134) / (1.814625 + T_F)
 
 def dewPoint_S_w(T):
     return 611.21 * np.exp(17.9662 * T/(T + 247.15)) * 1e-6 / np.exp(ln_p_w_P0(T))# Parametrization in MPa
