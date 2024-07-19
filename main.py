@@ -12,7 +12,6 @@ while True:
     if userInput == "exit":
         break
     elif command in dir(CLI):
-        getattr(CLI, command)(args)
         try:
             getattr(CLI, command)(args)
         except Exception as e:

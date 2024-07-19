@@ -192,16 +192,26 @@ class S_iTGraph(Graph):
             self.T_FTGraph.plot(self.Tn, T_FnReconverted, labelLine=parsedArgs.labeled, name="T_F{:0.2f}".format(T_F), label="$T_F$={:0.2f}".format(T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
 
-    def ambiant_S_w(self, ambiantT=296, S_wn = np.linspace(0,5,6)):
-        for S_w in S_wn:
-            S_in = np.array([parametrization.S_w2S_i_P0(self.Tn, parametrization.S_w_changeTemp(T, ambiantT, S_w)) for T in self.Tn])
-            self.plot(self.Tn, S_in, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color="orange")
+    def ambiant_S_w(self, args):
+        parser = argparse.ArgumentParser(prog="AmbiantS_w", description="Draw ambiant-RH into real temperature S_i T diagram", exit_on_error=False)
+        parser.add_argument("S_wT", type=float, help="S_w at the ambiant temperature")
+        parser.add_argument("-T", "--ambiantT", default=296, type=float, help="Ambiant temperature, at which the S_w is given")
+        parser.add_argument("-c", "--color", choices=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys(), dest="color", default="lightgrey", help="Color of the line (default: %(default)s)", metavar='matplotlibColor')
+        parser.add_argument("-w", "--lw", dest="lw", type=float, default=1, help="Line width (default: %(default)s)")
+        parser.add_argument("-u", "--unlabeled", dest="labeled", action="store_false", help="Unlabeled - when on, does not apply label to the line")
+        parser.add_argument("-x", "--xvals", dest="xvals", type=float, default=270, help="xvals, decide where to put the label, alignment with respect to the x-axis (default: %(default)s)")
 
-            if not S_w == 0.0:
-                T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
-                self.T_FTGraph.plot(self.Tn, T_Fn, name="S_w{:0.1f}".format(S_w), label="{:0.1f}".format(S_w), color="lightgrey", xvals=270)
-            else:
-                self.T_FTGraph.plot([], [], name="S_w0")
+        try: # prevents parser from exiting main program after displaying help
+            parsedArgs = parser.parse_args(args)
+        except SystemExit:
+            return
+
+        S_in = np.array([parametrization.S_w2S_i_P0(T, parametrization.S_w_changeTemp(T, parsedArgs.ambiantT, parsedArgs.S_wT)) for T in self.Tn])
+        self.plot(self.Tn, S_in, labelLine=parsedArgs.labeled, name="S_wT{:0.2f}".format(parsedArgs.S_wT), label="$S_wT${:0.2f}".format(parsedArgs.S_wT), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
+
+        if not parsedArgs.S_wT == 0.0:
+            T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
+            self.T_FTGraph.plot(self.Tn, T_Fn, labelLine=parsedArgs.labeled, name="S_wT{:0.2f}".format(parsedArgs.S_wT), label="$S_wT${:0.2f}".format(parsedArgs.S_wT), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
     def T_F2S_in(self, Tn, T_F):
         ln_p = parametrization.ln_p_MurphyKoop2005(T_F)
