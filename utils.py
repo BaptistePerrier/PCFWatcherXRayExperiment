@@ -36,8 +36,14 @@ class CLI:
         plt.show()
 
     def graph(self, args):
-        graphFunction = getattr(self.S_iTGraph, args[0])
+        if args[0] == "-h":
+            nameChoices = [func for func in dir(self.S_iTGraph) if callable(getattr(self.S_iTGraph, func)) and not func.startswith("__") and not func in dir(graphs.Graph)] # choices are not-default class methods, and not inherited methods
 
+            self.logger.log("usage: graph [-h] {}".format(nameChoices)) 
+            self.logger.log("Plot predefined graphs (see graph list)")
+            return
+
+        graphFunction = getattr(self.S_iTGraph, args[0])
         graphFunction(args[1:])
 
         self.S_iTGraph.refresh()

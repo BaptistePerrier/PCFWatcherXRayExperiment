@@ -160,12 +160,11 @@ class S_iTGraph(Graph):
         except SystemExit:
             return
 
-        S_in = self.T_F2S_in(self.Tn, parsedArgs.T_F)
+        S_in = self._T_F2S_in(self.Tn, parsedArgs.T_F)
         self.plot(self.Tn, S_in, labelLine=parsedArgs.labeled, name="T_F{:0.2f}".format(parsedArgs.T_F), label="$T_F$={:0.2f}".format(parsedArgs.T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
         T_FnReconverted = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
         self.T_FTGraph.plot(self.Tn, T_FnReconverted, labelLine=parsedArgs.labeled, name="T_F{:0.2f}".format(parsedArgs.T_F), label="$T_F$={:0.2f}".format(parsedArgs.T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
-
 
     def iso_T_F(self, args):
         parser = argparse.ArgumentParser(prog="iso_T_F", description="Draw multiple T_F lines", exit_on_error=False)
@@ -185,7 +184,7 @@ class S_iTGraph(Graph):
         T_Fn = np.linspace(parsedArgs.start, parsedArgs.end, parsedArgs.steps)
 
         for T_F in T_Fn:
-            S_in = self.T_F2S_in(self.Tn, T_F)
+            S_in = self._T_F2S_in(self.Tn, T_F)
             self.plot(self.Tn, S_in, labelLine=parsedArgs.labeled, name="T_F{:0.2f}".format(T_F), label="$T_F$={:0.2f}".format(T_F), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
             T_FnReconverted = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
@@ -213,7 +212,7 @@ class S_iTGraph(Graph):
             T_Fn = self.T_FTGraph.S_in2T_Fn(self.Tn, S_in)
             self.T_FTGraph.plot(self.Tn, T_Fn, labelLine=parsedArgs.labeled, name="S_wT{:0.2f}".format(parsedArgs.S_wT), label="$S_wT${:0.2f}".format(parsedArgs.S_wT), color=parsedArgs.color, lw=parsedArgs.lw, xvals=parsedArgs.xvals)
 
-    def T_F2S_in(self, Tn, T_F):
+    def __T_F2S_in(self, Tn, T_F):
         ln_p = parametrization.ln_p_MurphyKoop2005(T_F)
         S_i = np.exp(ln_p - parametrization.ln_p_i_P0(Tn))
 

@@ -11,6 +11,10 @@ while True:
     
     if userInput == "exit":
         break
+    elif userInput == "help" or userInput == "h" or userInput == "-h":
+        print("Available commands : ")
+        for method in [func for func in dir(CLI) if callable(getattr(CLI, func)) and not func.startswith("__")]:
+            print("\t{}".format(method))
     elif command in dir(CLI):
         try:
             getattr(CLI, command)(args)
