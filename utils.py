@@ -25,10 +25,6 @@ class CLI:
         self.logger.log("Successfully created CommandLineInterface")
 
         self.S_iTGraph = graphs.S_iTGraph()
-        self.T_FTGraph = graphs.T_FTGraph()
-
-        self.S_iTGraph.link_T_FTGraph(self.T_FTGraph)
-
 
         #cursor = Cursor(self.S_iTGraph.fig, useblit=True, color='black', linewidth=1)
 
@@ -47,7 +43,6 @@ class CLI:
         graphFunction(args[1:])
 
         self.S_iTGraph.refresh()
-        self.T_FTGraph.refresh()
 
     def delete(self, args):
         parser = argparse.ArgumentParser(prog="delete", exit_on_error=False, description="Delete lines from the graph. RegularExpressions can be used")
@@ -63,11 +58,6 @@ class CLI:
             for lineName in lineNames:
                 self.S_iTGraph.delete(lineName)
 
-            lineNames = list(self.T_FTGraph.lines.keys())
-            
-            for lineName in lineNames:
-                self.T_FTGraph.delete(lineName)
-
         else:
             pattern = re.compile(parsedArgs.expression)
 
@@ -76,12 +66,6 @@ class CLI:
             for lineName in lineNames:
                 if bool(pattern.match(lineName)):
                     self.S_iTGraph.delete(lineName)
-
-            lineNames = list(self.T_FTGraph.lines.keys())
-
-            for lineName in lineNames:
-                if bool(pattern.match(lineName)):
-                    self.T_FTGraph.delete(lineName)
 
     def show(self, args):
         parser = argparse.ArgumentParser(prog="show", exit_on_error=False, description="Show hidden lines on the graph. RegularExpressions can be used")
@@ -93,19 +77,11 @@ class CLI:
         if parsedArgs.expression == "*":
             for lineName in self.S_iTGraph.lines.keys():
                 self.S_iTGraph.set_visibility(lineName, True)
-
-            for lineName in self.T_FTGraph.lines.keys():
-                self.T_FTGraph.set_visibility(lineName, True)
-
         else:
             pattern = re.compile(parsedArgs.expression)
             for lineName in self.S_iTGraph.lines.keys():
                 if bool(pattern.match(lineName)):
                     self.S_iTGraph.set_visibility(lineName, True)
-
-            for lineName in self.T_FTGraph.lines.keys():
-                if bool(pattern.match(lineName)):
-                    self.T_FTGraph.set_visibility(lineName, True)
 
     def hide(self, args):
         parser = argparse.ArgumentParser(prog="hide", exit_on_error=False, description="Hide lines on the graph. RegularExpressions can be used")
@@ -116,18 +92,11 @@ class CLI:
             for lineName in self.S_iTGraph.lines.keys():
                 self.S_iTGraph.set_visibility(lineName, False)
 
-            for lineName in self.T_FTGraph.lines.keys():
-                self.T_FTGraph.set_visibility(lineName, False)
-
         else:
             pattern = re.compile(parsedArgs.expression)
             for lineName in self.S_iTGraph.lines.keys():
                 if bool(pattern.match(lineName)):
                     self.S_iTGraph.set_visibility(lineName, False)
-
-            for lineName in self.T_FTGraph.lines.keys():
-                if bool(pattern.match(lineName)):
-                    self.T_FTGraph.set_visibility(lineName, False)
 
     def list(self, args):
         parser = argparse.ArgumentParser(prog="list", exit_on_error=False)
@@ -140,13 +109,8 @@ class CLI:
 
         message = ""
         if parsedArgs.option == "visible":
-            message += ("\n\nS_i T Diagram :")
+            message += ("S_i T Diagram :")
             for name, line in self.S_iTGraph.lines.items():
-                if line.get_visible():
-                    message += ("\n\t{}".format(name))
-
-            message += ("\n\nT_F T Diagram :")
-            for name, line in self.T_FTGraph.lines.items():
                 if line.get_visible():
                     message += ("\n\t{}".format(name))
 
@@ -156,18 +120,9 @@ class CLI:
                 if not line.get_visible():
                     message += ("\n\t{}".format(name))
 
-            message += ("\n\nT_F T Diagram :")
-            for name, line in self.T_FTGraph.lines.items():
-                if not line.get_visible():
-                    message += ("\n\t{}".format(name))
-
         elif parsedArgs.option == "all":
             message += ("\n\nS_i T Diagram :")
             for name, line in self.S_iTGraph.lines.items():
-                message += ("\n\t[{}] {}".format("V" if line.get_visible() else " ", name))
-
-            message += ("\n\nT_F T Diagram :")
-            for name, line in self.T_FTGraph.lines.items():
                 message += ("\n\t[{}] {}".format("V" if line.get_visible() else " ", name))
 
         self.logger.log(message)
